@@ -107,13 +107,13 @@ def main():
                         if equipo.nombre.lower() == equipo_asociado.lower():
                             equipo_encontrado = equipo
                             break
-                
+                            
                     if equipo_encontrado:
                         equipo_encontrado.agregar_empleado(empleado)
                         print(f"\n{tipo_empleado.capitalize()} agregado al equipo {equipo_asociado}.")
                     else:
                         print(f"\nNo se encontró el equipo {equipo_asociado}.")
-                        equipo_nuevo = input(f"\nDebe crear un equipo {equipo_asociado}? (Sí/No): ").lower() == "si"
+                        equipo_nuevo = input(f"\nDesea crear el equipo {equipo_asociado}? Escriba si o no en caso de querer insertar el Empleado en otro equipo.").lower() == "si"
                         if equipo_nuevo:
                             nombre = equipo_asociado
                             pais_origen = input("\nIngrese país de origen: ")
@@ -122,8 +122,9 @@ def main():
                             equipo.agregar_empleado(empleado)
                             equipos.append(equipo)
                             print(f"\n{tipo_empleado.capitalize()} agregado al equipo {equipo_asociado}.")
-                        else:
-                            print("\nNo se creó el equipo.")
+                            break
+                        
+                        
 
             
         elif opcion == 2:
