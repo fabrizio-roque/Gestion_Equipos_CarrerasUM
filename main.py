@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import random # Solo para simular la carrera
 
 class Empleado:
     FORMATO_FECHA = "%d-%m-%Y"
@@ -48,7 +48,12 @@ class Auto:
         self._score = score
         self._color = color
 
-
+class Imprevisto:
+    def __init__(self):
+        self.lesionado = False
+        self.abandono = False
+        self.errores_en_pits = 0
+        self.penalidades = 0
 class Equipo:
     def __init__(self, nombre, pais_origen, ano_creacion):
         self._nombre = nombre
@@ -118,6 +123,26 @@ def input_validado(mensaje, tipo):
                 print("Valor inválido. Intente de nuevo.")
         except ValueError:
             print("Valor inválido. Intente de nuevo.")
+import random
+
+def generar_imprevistos_aleatorios():
+    imprevisto = Imprevisto()
+    
+    # Supongamos que hay un 10% de probabilidad de que un piloto se lesione
+    if random.random() < 0.10:
+        imprevisto.lesionado = True
+        
+    # 5% de probabilidad de que un piloto abandone
+    if random.random() < 0.05:
+        imprevisto.abandono = True
+        
+    # Un piloto podría cometer entre 0 y 3 errores en pits
+    imprevisto.errores_en_pits = random.randint(0, 3)
+    
+    # Un piloto podría recibir entre 0 y 2 penalidades
+    imprevisto.penalidades = random.randint(0, 2)
+    
+    return imprevisto
 
 def simular_carrera(autos, equipos):
     pilotos = []
@@ -138,47 +163,87 @@ def simular_carrera(autos, equipos):
         print("No hay pilotos y/o autos suficientes para simular una carrera.")
         return
 
+    # Recopilar imprevistos antes de iniciar la carrera
+    imprevistos_pilotos = {}
+    for piloto in pilotos:
+        imprevisto = generar_imprevistos_aleatorios()
+        imprevistos_pilotos[piloto._id] = imprevisto
+
     print("\nSimulación...\n")
     resultados = []
 
     for piloto in pilotos:
         auto = next((auto for auto in autos if auto._modelo == piloto._numero_auto), None)
         if auto:
-            score_final = (piloto._score + auto._score) / 2
+            imprevisto = imprevistos_pilotos[piloto._id]
+            
+            if imprevisto.abandono:
+                score_final = 0
+            else:
+                # Suponiendo que la suma_score_mecanicos es un valor constante
+                # si necesitas calcularlo, deberás agregar la lógica correspondiente
+                suma_score_mecanicos = 10  # Valor de ejemplo
+                score_final = suma_score_mecanicos + auto._score + piloto._score - 5 * imprevisto.errores_en_pits - 8 * imprevisto.penalidades
+
             resultados.append((piloto._nombre, score_final))
 
     resultados.sort(key=lambda x: x[1], reverse=True)  # Ordena los resultados de mayor a menor score
 
     print("Resultados de la carrera:")
+    puntos = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
     for i, (nombre, score) in enumerate(resultados, 1):
-        print(f"{i}. {nombre} - Score: {score:.2f}")
+        if i <= len(puntos):
+            print(f"{i}. {nombre} - Score: {score:.2f} - Puntos obtenidos: {puntos[i-1]}")
+        else:
+            print(f"{i}. {nombre} - Score: {score:.2f}")
 
 def realizar_consultas(equipos):
     while True:
         print("\nSeleccione una opción de consulta:")
-        print("1. Lista de empleados por equipo.")
-        print("2. Pilotos lesionados.")
-        print("3. Volver al menú principal.")
+        print("1. Top 10 pilotos con más puntos en el campeonato.")
+        print("2. Resumen campeonato de constructores (equipos).")
+        print("3. Top 5 pilotos mejor pagados.")
+        print("4. Top 3 pilotos más habilidosos.")
+        print("5. Retornar jefes de equipo.")
+        print("6. Volver al menú principal.")
         
         opcion = valida_opcion(1, 6)
         
         if opcion == 1:
-            pass
-        
+            pilotos = [piloto for equipo in equipos for piloto in equipo.pilotos]
+            top_10_pilotos = sorted(pilotos, key=lambda x: x._puntaje_campeonato, reverse=True)[:10]
+            print("\nTop 10 pilotos con más puntos en el campeonato:")
+            for piloto in top_10_pilotos:
+                print(f"{piloto._nombre} - {piloto._puntaje_campeonato} puntos")
+                
         elif opcion == 2:
-            pass
-        
+            print("\nResumen campeonato de constructores (equipos):")
+            for equipo in equipos:
+                total_puntos = sum([piloto._puntaje_campeonato for piloto in equipo.pilotos])
+                print(f"{equipo.nombre} - {total_puntos} puntos")
+
         elif opcion == 3:
-            pass
+            pilotos = [piloto for equipo in equipos for piloto in equipo.pilotos]
+            top_5_pagados = sorted(pilotos, key=lambda x: x._salario, reverse=True)[:5]
+            print("\nTop 5 pilotos mejor pagados:")
+            for piloto in top_5_pagados:
+                print(f"{piloto._nombre} - ${piloto._salario:.2f}")
         
         elif opcion == 4:
-            pass
+            pilotos = [piloto for equipo in equipos for piloto in equipo.pilotos]
+            top_3_habilidosos = sorted(pilotos, key=lambda x: x._score, reverse=True)[:3]
+            print("\nTop 3 pilotos más habilidosos:")
+            for piloto in top_3_habilidosos:
+                print(f"{piloto._nombre} - Score: {piloto._score}")
         
         elif opcion == 5:
-            pass
-        
+            directores = [empleado for equipo in equipos for empleado in equipo._empleados if isinstance(empleado, DirectorEquipo)]
+            print("\nJefes de equipo:")
+            for director in directores:
+                print(director._nombre)
+
         elif opcion == 6:
-            pass
+            break
 
 def main():
     equipos = []
