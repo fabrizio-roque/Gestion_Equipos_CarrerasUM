@@ -80,6 +80,10 @@ class Equipo:
             print("Ya hay 2 pilotos en este equipo. No se puede agregar otro.")
             return
         self._empleados.append(empleado)
+        
+    @property
+    def mecanicos(self):
+        return [empleado for empleado in self._empleados if isinstance(empleado, Mecanico)]
 
 
 def obtener_datos_empleado():
@@ -98,7 +102,7 @@ def obtener_datos_empleado():
             print(f"La fecha '{fecha_nacimiento}' no tiene el formato correcto. Debe ser DD-MM-YYYY.")
 
     salario = input_validado("Ingrese salario: ", tipo=float)
-    score = input_validado("Ingrese score: ", tipo=int)
+    score = input_validado("Ingrese score (entre 1 y 99): ", tipo=int, minimo=1, maximo=99)
     return id, nombre, edad, nacionalidad, fecha_nacimiento, salario, score
 
 
@@ -149,6 +153,27 @@ def generar_imprevistos_aleatorios():
     
     return imprevisto
 
+def input_validado(mensaje, tipo, minimo=None, maximo=None):
+    while True:
+        valor = input(mensaje)
+        try:
+            if tipo == int:
+                valor_int = int(valor)
+                if (minimo is not None and valor_int < minimo) or (maximo is not None and valor_int > maximo):
+                    raise ValueError
+                return valor_int
+            elif tipo == float:
+                return float(valor)
+            elif tipo == str and valor:
+                return valor.strip()
+            else:
+                print("Valor inválido. Intente de nuevo.")
+        except ValueError:
+            print("Valor inválido. Intente de nuevo.")
+            
+def tiene_suficientes_mecanicos(equipo):
+    return len([empleado for empleado in equipo._empleados if isinstance(empleado, Mecanico)]) >= 8
+           
 def print_loading(duration=5):
     end_time = time.time() + duration
     load_chars = ['|', '/', '-', '\\']
@@ -160,25 +185,44 @@ def print_loading(duration=5):
         time.sleep(0.1)
         i += 1
 
-    sys.stdout.write('\rCarrera Terminada!!        \n')
+    sys.stdout.write('\rCarrera Finalizada...\n')
     
 def simular_carrera(autos, equipos):
+    
     pilotos = []
-    for equipo in equipos:
+    
+    # Filtrar equipos que tienen suficientes mecánicos
+    equipos_calificados = [equipo for equipo in equipos if tiene_suficientes_mecanicos(equipo)]
+    equipos_descalificados = [equipo for equipo in equipos if not tiene_suficientes_mecanicos(equipo)]
+
+    # Imprimir equipos calificados y descalificados
+    print("Equipos calificados para la carrera:\n")
+    for equipo in equipos_calificados:
+        print(f"- {equipo.nombre}")
+    print("\n")
+    print("\nEquipos descalificados por falta de mecánicos:\n")
+    for equipo in equipos_descalificados:
+        print(f"- {equipo.nombre}")
+    print("\n")
+    # Verifica si hay equipos calificados para la carrera
+    if not equipos_calificados:
+        print("\nNo hay equipos con suficientes mecánicos para iniciar la carrera.\n")
+        return
+
+    for equipo in equipos_calificados:
         pilotos_equipo = equipo.pilotos
         if pilotos_equipo:
             piloto_titular = pilotos_equipo[0]
-            if piloto_titular._lesionado:
-                if len(pilotos_equipo) > 1:
-                    piloto_reserva = pilotos_equipo[1]
-                    if not piloto_reserva._lesionado:
-                        pilotos.append(piloto_reserva)
+            if piloto_titular._lesionado and len(pilotos_equipo) > 1:
+                piloto_reserva = pilotos_equipo[1]
+                if not piloto_reserva._lesionado:
+                    pilotos.append(piloto_reserva)
             else:
                 pilotos.append(piloto_titular)
 
-    # Verifica si hay pilotos y autos disponibles
-    if not pilotos or not autos:
-        print("No hay pilotos y/o autos suficientes para simular una carrera.")
+    # Verifica si hay pilotos disponibles para la carrera
+    if not pilotos:
+        print("No hay pilotos disponibles para la carrera.")
         return
 
     # Recopilar imprevistos antes de iniciar la carrera
@@ -190,13 +234,11 @@ def simular_carrera(autos, equipos):
     print_loading()
     resultados = []
     
-    
-
     for piloto in pilotos:
         auto = next((auto for auto in autos if auto._modelo == piloto._numero_auto), None)
         if auto:
             imprevisto = imprevistos_pilotos[piloto._id]
-        
+            
             if imprevisto.abandono:
                 score_final = 0
             else:
@@ -205,7 +247,7 @@ def simular_carrera(autos, equipos):
 
             resultados.append((piloto, score_final))
 
-    resultados.sort(key=lambda x: x[1], reverse=True)  # Ordena los resultados de mayor a menor score
+    resultados.sort(key=lambda x: x[1], reverse=True)
 
     print("Resultados de la carrera:")
     puntos = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
@@ -213,6 +255,8 @@ def simular_carrera(autos, equipos):
         puntos_adicionales = puntos[i-1] if i <= len(puntos) else 0
         piloto.actualizar_puntaje_campeonato(puntos_adicionales)
         print(f"{i}. {piloto._nombre} - Score: {score:.2f} - Puntos obtenidos: {puntos_adicionales}")
+    print("")
+        
 def realizar_consultas(equipos):
     while True:
         print("\nSeleccione una opción de consulta:")
@@ -307,13 +351,26 @@ def configurar_prueba_y_simular(equipos, autos):
     mecanico2 = Mecanico(5, "Mecanico2", 38, "Francesa", "05-05-1982", 42000, 85)
     mecanico3 = Mecanico(6, "Mecanico3", 36, "Francesa", "06-06-1984", 44000, 90)
     mecanico4 = Mecanico(7, "Mecanico4", 34, "Francesa", "07-07-1986", 46000, 95)
-    mecanico5 = Mecanico(8, "Mecanico5", 32, "Francesa", "08-08-1988", 48000, 100)
-    mecanico6 = Mecanico(9, "Mecanico6", 30, "Francesa", "09-09-1990", 50000, 105)
-    mecanico7 = Mecanico(10, "Mecanico7", 28, "Francesa", "10-10-1992", 52000, 110)
-    mecanico8 = Mecanico(11, "Mecanico8", 26, "Francesa", "11-11-1994", 54000, 115)
-    mecanico9 = Mecanico(12, "Mecanico9", 24, "Francesa", "12-12-1996", 56000, 120)
-    mecanico10 = Mecanico(13, "Mecanico10", 22, "Francesa", "09-09-1995", 58000, 125)
-
+    mecanico5 = Mecanico(8, "Mecanico5", 32, "Francesa", "08-08-1988", 48000, 85)
+    mecanico6 = Mecanico(9, "Mecanico6", 30, "Francesa", "09-09-1990", 50000, 85)
+    mecanico7 = Mecanico(10, "Mecanico7", 28, "Francesa", "10-10-1992", 52000, 85)
+    mecanico8 = Mecanico(11, "Mecanico8", 26, "Francesa", "11-11-1994", 54000, 85)
+    mecanico9 = Mecanico(12, "Mecanico9", 24, "Francesa", "12-12-1996", 56000, 85)
+    mecanico10 = Mecanico(13, "Mecanico10", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico11 = Mecanico(14, "Mecanico11", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico12 = Mecanico(15, "Mecanico12", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico13 = Mecanico(16, "Mecanico13", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico14 = Mecanico(17, "Mecanico14", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico15 = Mecanico(18, "Mecanico15", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico16 = Mecanico(19, "Mecanico16", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico17 = Mecanico(20, "Mecanico17", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico18 = Mecanico(21, "Mecanico18", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico19 = Mecanico(22, "Mecanico19", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico20 = Mecanico(23, "Mecanico20", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico21 = Mecanico(24, "Mecanico21", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico22 = Mecanico(25, "Mecanico22", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico23 = Mecanico(26, "Mecanico23", 22, "Francesa", "09-09-1995", 58000, 85)
+    mecanico24 = Mecanico(27, "Mecanico24", 22, "Francesa", "09-09-1995", 58000, 85)
     # Directores de equipo
     director1 = DirectorEquipo(6, "Director1", 50, "Alemana", "06-06-1970", 100000)
     director2 = DirectorEquipo(7, "Director2", 48, "Alemana", "07-07-1972", 95000)
@@ -334,10 +391,24 @@ def configurar_prueba_y_simular(equipos, autos):
     equipo1.agregar_empleado(piloto1)
     equipo1.agregar_empleado(mecanico1)
     equipo1.agregar_empleado(director1)
+    equipo1.agregar_empleado(mecanico11)
+    equipo1.agregar_empleado(mecanico12)
+    equipo1.agregar_empleado(mecanico13)
+    equipo1.agregar_empleado(mecanico14)
+    equipo1.agregar_empleado(mecanico15)
+    equipo1.agregar_empleado(mecanico16)
+    equipo1.agregar_empleado(mecanico17)
    
     equipo2.agregar_empleado(piloto2)
     equipo2.agregar_empleado(mecanico2)
     equipo2.agregar_empleado(director2)
+    equipo2.agregar_empleado(mecanico18)
+    equipo2.agregar_empleado(mecanico19)
+    equipo2.agregar_empleado(mecanico20)
+    equipo2.agregar_empleado(mecanico21)
+    equipo2.agregar_empleado(mecanico22)
+    equipo2.agregar_empleado(mecanico23)
+    equipo2.agregar_empleado(mecanico24) 
     
     equipo3.agregar_empleado(piloto3)
     equipo3.agregar_empleado(mecanico3)
