@@ -155,21 +155,23 @@ def generar_imprevistos_aleatorios():
 
 def input_validado(mensaje, tipo, minimo=None, maximo=None):
     while True:
-        valor = input(mensaje)
         try:
+            valor = input(mensaje)
             if tipo == int:
                 valor_int = int(valor)
                 if (minimo is not None and valor_int < minimo) or (maximo is not None and valor_int > maximo):
                     raise ValueError
                 return valor_int
             elif tipo == float:
-                return float(valor)
-            elif tipo == str and valor:
-                return valor.strip()
-            else:
-                print("Valor inválido. Intente de nuevo.")
+                valor_float = float(valor)
+                return valor_float
+            elif tipo == str:
+                valor_str = valor.strip()
+                if not valor_str:
+                    raise ValueError
+                return valor_str
         except ValueError:
-            print("Valor inválido. Intente de nuevo.")
+            print("Entrada inválida, intente nuevamente.")
             
 def tiene_suficientes_mecanicos(equipo):
     return len([empleado for empleado in equipo._empleados if isinstance(empleado, Mecanico)]) >= 8
