@@ -25,7 +25,7 @@ class Empleado:
             datetime.strptime(valor, self.FORMATO_FECHA)
             self._fecha_nacimiento = valor
         except ValueError:
-            raise ValueError(f"La fecha '{valor}' no tiene el formato correcto. Debe ser DD-MM-YYYY.")
+            raise ValueError(f"La fecha '{valor}' tiene el formato incorrecto. Debe ser DD-MM-YYYY.")
 
 
 class Piloto(Empleado):
