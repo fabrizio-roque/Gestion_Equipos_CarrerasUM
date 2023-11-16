@@ -452,15 +452,16 @@ def main():
     autos = []
 
     while True:
+        print("\nMenú Principal")
         print("1. Alta de empleado")
         print("2. Alta de auto")
         print("3. Alta de equipo")
-        print("4. Simular carrera")
-        print("5. Realizar consultas")
-        print("6. Finalizar programa")
-        print("7. Configurar prueba y simular")
+        print("4. Realizar Consultas")
+        print("5. Simular carrera")
+        print("6. Simular carrera con los datos internos")
+        print("7. Salir")
 
-        opcion = valida_opcion(1, 7)
+        opcion = input_validado("Seleccione una opción: ", int, 1, 7)
 
         if opcion == 1:
             while True:
@@ -513,29 +514,40 @@ def main():
                             break
                         else:
                             print("Por favor, ingrese el nombre de un equipo existente o cree uno nuevo.")
+                print("Empleado creado correctamente")
 
         elif opcion == 2:
-            modelo = input("Ingrese modelo del auto: ")
-            score = int(input("Ingrese score: "))
-            color = input("Ingrese color: ")
+            # Proceso para alta de auto
+            modelo = input_validado("Ingrese modelo del auto: ", str)
+            score = input_validado("Ingrese score: ", int)
+            color = input_validado("Ingrese color: ", str)
             auto = Auto(modelo, score, color)
             autos.append(auto)
             print("Auto creado correctamente")
 
         elif opcion == 3:
-            nombre = input("Ingrese nombre del equipo: ")
-            pais_origen = input("Ingrese país de origen: ")
-            year_creacion = int(input("Ingrese año de creación: "))
-            equipo = Equipo(nombre, pais_origen, year_creacion)
+            # Proceso para alta de equipo
+            nombre_equipo = input_validado("Ingrese nombre del equipo: ", str)
+            pais_origen = input_validado("Ingrese país de origen: ", str)
+            ano_creacion = input_validado("Ingrese año de creación: ", int)
+            equipo = Equipo(nombre_equipo, pais_origen, ano_creacion)
             equipos.append(equipo)
+            print("Equipo creado correctamente")
+
         elif opcion == 4:
-            simular_carrera(autos, equipos)
-        elif opcion == 5:
             realizar_consultas(equipos)
+
+        elif opcion == 5:
+            simular_carrera(autos, equipos)
+
         elif opcion == 6:
-            break
+            nombres_equipos_descalificados = configurar_prueba_y_simular(autos, equipos)
+
         elif opcion == 7:
-            configurar_prueba_y_simular(equipos, autos)
+            print("Saliendo del programa.")
+            break
+            
 
 
-main()
+if __name__ == "__main__":
+    main()
